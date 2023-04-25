@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from 
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UsuarioService } from 'src/app/services/usuario.service';
+import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2'
 declare const google:any
 
@@ -15,6 +16,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   @ViewChild('googleBtn') googleBtn!: ElementRef
 
   public formSubmitted = false;
+  private client_id:string = environment.client_id;
   
   public loginForm:FormGroup = this.fb.group({
     password: ['', [Validators.required]],
@@ -34,10 +36,10 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   googleInit() {
-    const getClientId = this.usuarioService.getClientId();
+    
 
     google.accounts.id.initialize({
-      ...getClientId,
+      client_id: this.client_id,
       callback: (response:any) => this.handleCredentialResponse(response)
     });
 
@@ -63,16 +65,17 @@ export class LoginComponent implements OnInit, AfterViewInit {
       next: (value) => {
         if(this.loginForm.get('remember')?.value) {
             localStorage.setItem('email', this.loginForm.get('email')?.value)
-            return;
+        }else {
+          localStorage.removeItem('email');
         }
 
-        localStorage.removeItem('email')
-        this.router.navigateByUrl('/')
+        this.router.navigateByUrl('/');
       },
       error: (err) => {
+        console.log(err.error.errors);
         Swal.fire({
           title:'Error',
-          text: err.error.msg,
+          text: this.getErrors(err.error),
           icon:'error'
         })
       }
@@ -81,8 +84,18 @@ export class LoginComponent implements OnInit, AfterViewInit {
     // this.router.navigateByUrl('/')
   }
 
+  getErrors(error:any):string {
+
+    if(error?.errors) {
+      return "El email y contraseña son obligatorios";
+    }
+
+    return error.msg;
+
+  }
+
   ngOnInit(): void {
-    
+   
   }
 
 }

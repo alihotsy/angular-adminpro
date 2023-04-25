@@ -8,3 +8,8 @@
 #themecolors .selector:hover {
     transform: translateY(-3px) scale(1.1);
 }
+
+.img-avatar {
+  width: 200px;
+  height:200px;
+}

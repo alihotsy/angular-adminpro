@@ -5,40 +5,53 @@ import { environment } from 'src/environments/environment';
 import { LoginForm } from '../interfaces/login-form.interface';
 import { Observable, catchError, map, of, pipe, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { Usuario } from '../models/usuario.model';
 declare const google:any;
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class UsuarioService {
 
-  private email:string = localStorage.getItem('googleEmail') || '';
-
-  private clientId = {
-    client_id: "286053610181-8l45sc9kg1h1knhmgchugukmuuuadade.apps.googleusercontent.com"
-  }
+  public usuario:Usuario | null
 
   private baseUrl:string = environment.base_url;
+  private client_id:string = environment.client_id;
 
   constructor(private http:HttpClient,private router:Router) { 
+    this.usuario = null;
     this.googleInit();
   }
 
-  getClientId() {
-    return structuredClone(this.clientId);
+  googleInit() {
+    google.accounts.id.initialize({
+      client_id: this.client_id
+    });
   }
 
-  googleInit() {
-    google.accounts.id.initialize(this.clientId);
+  get token():string {
+     return localStorage.getItem('token') || "";
+  }
+
+  get uid():string {
+    return this.usuario?.uid || ''
   }
 
   logout() {
     localStorage.removeItem('token');
-    localStorage.removeItem('googleEmail');
+    // localStorage.removeItem('googleEmail');
 
-    google.accounts.id.revoke(this.email, () => {
+    if(!this.usuario?.google) {
+      this.usuario = null;
+      this.router.navigateByUrl('/login');
+      return;
+    }
+
+    google.accounts.id.revoke(this.usuario?.email, () => {
       
-      this.router.navigateByUrl('/login')
+      this.usuario = null;
+      this.router.navigateByUrl('/login');
     })
   }
 
@@ -51,7 +64,22 @@ export class UsuarioService {
   )
   }
 
+  actualizarPerfil(data: { email:string, nombre:string, role:string }) {
+
+    data = {
+      ...data,
+      role: this.usuario?.role || 'USER_ROLE'
+    }
+
+    return this.http.put(`${this.baseUrl}/usuarios/${this.uid}`, data, {
+      headers: {
+        'x-token': this.token
+      }
+    })
+  }
+
   login(loginData:LoginForm) {
+    
     return this.http.post(`${this.baseUrl}/login`, loginData)
     .pipe(
         tap(({token}:any) => {
@@ -62,21 +90,27 @@ export class UsuarioService {
 
   validarToken(): Observable<boolean> {
 
-    const token = localStorage.getItem('token') || "";
 
-    const headers = new HttpHeaders().set('x-token',token)
+    const headers = new HttpHeaders().set('x-token',this.token)
 
     return this.http.get(`${this.baseUrl}/login/renew`,{
       headers
     }).pipe(
       map((resp:any) => {
         localStorage.setItem('token', resp.token)
+        const { uid, nombre, email, role, google, img } = resp.usuario;
+        this.usuario = new Usuario(nombre,email,undefined,google,img,role,uid);
         return resp.ok
       }),
       catchError((resp:any) => {
-        google.accounts.id.revoke(this.email)
+
+        if(this.usuario?.google) {
+          google.accounts.id.revoke(this.usuario?.email)
+        }
+
         localStorage.removeItem('token');
-        localStorage.removeItem('googleEmail');
+        this.usuario = null;
+        // localStorage.removeItem('googleEmail');
         return of(resp.ok)
       })
     )
@@ -84,12 +118,12 @@ export class UsuarioService {
   }
 
   loginGoogle(token:string) {
+    
     return this.http.post(`${this.baseUrl}/login/google`,{token})
       .pipe(
         tap((resp:any) => {
           localStorage.setItem('token', resp.token);
-          localStorage.setItem('googleEmail',resp.email);
-          this.email = resp.email;
+    
        })
       )
   }
