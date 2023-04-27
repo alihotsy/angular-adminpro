@@ -6,6 +6,7 @@ import { LoginForm } from '../interfaces/login-form.interface';
 import { Observable, catchError, map, of, pipe, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { Usuario } from '../models/usuario.model';
+import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
 declare const google:any;
 
 
@@ -36,6 +37,14 @@ export class UsuarioService {
 
   get uid():string {
     return this.usuario?.uid || ''
+  }
+
+  get headers() {
+    return {
+      headers: {
+        'x-token': this.token
+      }
+    }
   }
 
   logout() {
@@ -126,6 +135,35 @@ export class UsuarioService {
     
        })
       )
+  }
+
+  cargarUsuarios(desde:number = 0): Observable<CargarUsuario> {
+
+    return this.http.get<CargarUsuario>(`${this.baseUrl}/usuarios?desde=${desde}`, this.headers)
+              .pipe(
+                map(resp => {
+        
+                  resp.usuarios = resp.usuarios.map(
+                    ({uid,nombre,email,role,google,img}) => new Usuario(nombre,email,undefined,google,img,role,uid)
+                  )
+                  return resp
+                   
+                })
+              )
+
+  }
+
+  eliminarUsuario(usuario: Usuario) {
+
+    return this.http.delete(`${this.baseUrl}/usuarios/${usuario.uid}`,this.headers);
+
+  }
+
+  actualizarUsuario(data:Usuario) {
+
+  
+    return this.http.put(`${this.baseUrl}/usuarios/${data.uid}`, data, this.headers)
+
   }
 
   
