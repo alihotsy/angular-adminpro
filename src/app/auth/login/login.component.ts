@@ -33,6 +33,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.googleInit();
+    this.usuarioService.googleEmit.emit('Googling!')
+    console.log('ViewInit');
   }
 
   googleInit() {

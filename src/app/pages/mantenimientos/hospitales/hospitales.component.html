@@ -1,0 +1,93 @@
+<div class="row animated fadeIn">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <input #txtBuscar (keyup)="busquedas(txtBuscar.value)" type="text" class="form-control" placeholder="Buscar hospital..."/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="cargando" class="row animated fadeIn">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <h4 class="alert-heading">Cargando...</h4>
+            <i class="fa fa-spin fa-refresh fa-2x"></i>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="!cargando" class="row animated fadeIn fast">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                
+                <div class="row">
+                    <div class="col-8">
+                        <h4 class="card-title">Hospitales ({{ hospitales.length }})</h4>
+                        <h6 class="card-subtitle">Hospitales registrados</h6>
+                    </div>
+                    <div class="col text-right">
+                        <button (click)="abrirSweetAlert()" class="btn btn-success">
+                            <i class="fa fa-hospital-o mr-1"></i>
+                            Crear hospital
+                        </button>
+                    </div>
+
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="w100">Foto</th>
+                                <th>Nombre</th>
+                                <th class="text-nowrap w100">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let hospital of hospitales">
+                                <td class="text-center">
+                                  <img (click)="abrirModal(hospital)" class="w-50 cursor" [src]="hospital.img | imagen:'hospitales'" alt="">
+                                </td>
+                                <td>
+                                  <input 
+                                    [(ngModel)] = "hospital.nombre"
+                                    type="text"
+                                    class="form-control"
+                                    placeholder="Nombre del hospital"
+                                    /> 
+                                </td>
+                                <td class="text-nowrap text-center">
+                                    <a 
+                                      class="cursor" 
+                                      data-toggle="tooltip" 
+                                      data-original-title="Guardar"
+                                      (click)="guardarCambios(hospital)"
+                                       > 
+                                      <i class="fa fa-pencil text-inverse m-r-10"></i> 
+                                    </a>
+                                    <a 
+                                      class="cursor" 
+                                      data-toggle="tooltip"
+                                      data-original-title="Borrar"
+                                      (click)="eliminarHospital(hospital)"
+                                      > 
+                                       <i class="fa fa-close text-danger"></i> 
+                                    </a>
+                                </td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                </div>
+
+               
+                    <!-- <button  class="btn btn-secondary"><i class="fa fa-arrow-circle-left mr-1"></i>Anterior</button>
+                    <button  class="btn btn-secondary ml-2">Siguiente<i class="fa fa-arrow-circle-right ml-1"></i></button> -->
+              
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,9 +1,9 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { RegisterForm } from '../interfaces/register-form.interface';
 import { environment } from 'src/environments/environment';
 import { LoginForm } from '../interfaces/login-form.interface';
-import { Observable, catchError, map, of, pipe, tap } from 'rxjs';
+import { Observable, catchError, delay, map, of, pipe, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { Usuario } from '../models/usuario.model';
 import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
@@ -16,13 +16,21 @@ declare const google:any;
 export class UsuarioService {
 
   public usuario:Usuario | null
-
+  public googleIn:any
   private baseUrl:string = environment.base_url;
   private client_id:string = environment.client_id;
+  public googleEmit: EventEmitter<string> = new EventEmitter();
 
   constructor(private http:HttpClient,private router:Router) { 
+    
     this.usuario = null;
-    this.googleInit();
+    // const obs$ = new Observable()
+    // obs$
+    // .pipe(delay(200),tap(resp => this.googleInit()))
+    this.googleEmit.subscribe(resp => {
+      this.googleInit()
+    })
+    
   }
 
   googleInit() {
@@ -49,7 +57,7 @@ export class UsuarioService {
 
   logout() {
     localStorage.removeItem('token');
-    // localStorage.removeItem('googleEmail');
+    localStorage.removeItem('googleEmail');
 
     if(!this.usuario?.google) {
       this.usuario = null;
@@ -99,7 +107,8 @@ export class UsuarioService {
 
   validarToken(): Observable<boolean> {
 
-
+    
+    this.googleEmit.emit('Activar google signIn')
     const headers = new HttpHeaders().set('x-token',this.token)
 
     return this.http.get(`${this.baseUrl}/login/renew`,{
@@ -109,17 +118,24 @@ export class UsuarioService {
         localStorage.setItem('token', resp.token)
         const { uid, nombre, email, role, google, img } = resp.usuario;
         this.usuario = new Usuario(nombre,email,undefined,google,img,role,uid);
+
+        if(google) {
+          localStorage.setItem('googleEmail',this.usuario.email)
+        }
+
         return resp.ok
       }),
       catchError((resp:any) => {
 
-        if(this.usuario?.google) {
-          google.accounts.id.revoke(this.usuario?.email)
-        }
+        const googleEmail = localStorage.getItem('googleEmail');
 
+        if(googleEmail) {
+          google.accounts.id.revoke(googleEmail);
+        }
+        
+        localStorage.removeItem('googleEmail');
         localStorage.removeItem('token');
         this.usuario = null;
-        // localStorage.removeItem('googleEmail');
         return of(resp.ok)
       })
     )
