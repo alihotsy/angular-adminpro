@@ -22,11 +22,12 @@ export class SidebarComponent implements OnInit {
   ) {
 
     this.usuario = usuarioService.usuario!;
-    this.menuItems = this.sidebarService.menu;
+    
 
   }
 
   ngOnInit(): void {
+    this.menuItems = this.sidebarService.menu;
   }
 
 }

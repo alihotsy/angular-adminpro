@@ -27,7 +27,9 @@ export class UsuarioService {
     // const obs$ = new Observable()
     // obs$
     // .pipe(delay(200),tap(resp => this.googleInit()))
-    this.googleEmit.subscribe(resp => {
+    this.googleEmit
+      .pipe(delay(100))  //Si no funciona, entonces usar un new Observable.
+     .subscribe(resp => {
       this.googleInit()
     })
     
@@ -57,6 +59,7 @@ export class UsuarioService {
 
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('menu')
     localStorage.removeItem('googleEmail');
 
     if(!this.usuario?.google) {
@@ -64,6 +67,8 @@ export class UsuarioService {
       this.router.navigateByUrl('/login');
       return;
     }
+
+    //TODO: Borrar menú
 
     google.accounts.id.revoke(this.usuario?.email, () => {
       
@@ -99,8 +104,9 @@ export class UsuarioService {
     
     return this.http.post(`${this.baseUrl}/login`, loginData)
     .pipe(
-        tap(({token}:any) => {
+        tap(({token,menu}:any) => {
            localStorage.setItem('token', token);
+           localStorage.setItem('menu', JSON.stringify(menu));
         })
     )
   }
@@ -115,7 +121,8 @@ export class UsuarioService {
       headers
     }).pipe(
       map((resp:any) => {
-        localStorage.setItem('token', resp.token)
+        localStorage.setItem('token', resp.token);
+        localStorage.setItem('menu', JSON.stringify(resp.menu));
         const { uid, nombre, email, role, google, img } = resp.usuario;
         this.usuario = new Usuario(nombre,email,undefined,google,img,role,uid);
 
@@ -148,7 +155,7 @@ export class UsuarioService {
       .pipe(
         tap((resp:any) => {
           localStorage.setItem('token', resp.token);
-    
+          localStorage.setItem('menu', JSON.stringify(resp.menu));
        })
       )
   }

@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Observable, delay } from 'rxjs';
 import { UsuarioService } from 'src/app/services/usuario.service';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2'
@@ -32,23 +33,30 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngAfterViewInit(): void {
-    this.googleInit();
-    this.usuarioService.googleEmit.emit('Googling!')
-    console.log('ViewInit');
+    this.googleInit()
+     .pipe(delay(100))
+     .subscribe()
+
+    // this.usuarioService.googleEmit.emit('Googling!')
   }
 
   googleInit() {
     
+    return new Observable(observer => {
+      google.accounts.id.initialize({
+        client_id: this.client_id,
+        callback: (response:any) => this.handleCredentialResponse(response)
+      });
+  
+      google.accounts.id.renderButton(
+        this.googleBtn.nativeElement,
+        { theme: "outline", size: "large" }  // customization attributes
+      );
 
-    google.accounts.id.initialize({
-      client_id: this.client_id,
-      callback: (response:any) => this.handleCredentialResponse(response)
-    });
+      this.usuarioService.googleEmit.emit('Googling!')
 
-    google.accounts.id.renderButton(
-      this.googleBtn.nativeElement,
-      { theme: "outline", size: "large" }  // customization attributes
-    );
+    })
+     
   }
 
   handleCredentialResponse(response:any) {

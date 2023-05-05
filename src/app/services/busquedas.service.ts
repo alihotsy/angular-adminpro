@@ -41,6 +41,10 @@ transformarMedicos(resultados: any[]): Medico[] {
   return resultados;
 }
 
+busquedaGlobal(termino:string) {
+  return this.http.get(`${base_url}/todo/${termino}`,this.headers)
+}
+
  buscar(
   tipo: 'medicos' | 'usuarios' | 'hospitales',
   termino:string
